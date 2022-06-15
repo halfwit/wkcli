@@ -1,8 +1,8 @@
 package main
 
 import (
-	"compress/gzip"
 	"fmt"
+	"io"
 	"io/ioutil"
 
 	"github.com/tidwall/gjson"
@@ -16,7 +16,7 @@ func listAmbiguities(r []interface{}) error {
 		return fmt.Errorf("Received incomplete results, cannot continue")
 	}
 	names := iface.getslice(r[1], "Names")
-	syn   := iface.getslice(r[2], "Synopsis")
+	syn   := iface.getslice(r[3], "Synopsis")
 	if err := iface.errors(); err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func listAmbiguities(r []interface{}) error {
 	return nil
 }
 
-func listLinks(header []interface{}, results *gzip.Reader) error {
+func listLinks(header []interface{}, results io.ReadCloser) error {
 	err := listHeading(header)
 	if err != nil || ! *refs {
 		return err
@@ -40,7 +40,7 @@ func listLinks(header []interface{}, results *gzip.Reader) error {
 func listHeading(r []interface{}) error {
 	var iface fromInterface
 	if len(r) < 3 || r == nil {
-		fmt.Errorf("Unable to parse results, cannot continue")
+		return fmt.Errorf("Unable to parse results, cannot continue")
 	}
 	name := iface.getslice(r[1], "Names")
 	syns := iface.getslice(r[2], "Synopsis")
@@ -57,7 +57,7 @@ func (e *fromInterface) getslice(i interface{}, name string) []interface{} {
 	case []interface{}:
 		return v
 	}
-	*e = append(*e, fmt.Sprintf("Unable to locate %s in results"))
+	*e = append(*e, fmt.Sprintf("Unable to locate %s in results", name))
 	return nil
 }
 

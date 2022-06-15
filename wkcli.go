@@ -32,6 +32,7 @@ func main() {
 		os.Exit(0)
 	}
 	d2, err := getLinks(query)
+	defer d2.Close()
 	if err != nil {
 		log.Fatalf("%s\n%s\n", listHeading(d), err)
 	}

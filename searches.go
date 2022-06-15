@@ -1,9 +1,9 @@
 package main
 
 import (
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -15,6 +15,7 @@ func getInitial(query string) ([]interface{}, error) {
 	url := fmt.Sprintf(initial, *wiki, query)
 	var r []interface{}
 	gr, err := run(url)
+	defer gr.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +25,7 @@ func getInitial(query string) ([]interface{}, error) {
 	return r, nil
 }
 
-func getLinks(query string) (*gzip.Reader, error) {
+func getLinks(query string) (io.ReadCloser, error) {
 	url := fmt.Sprintf(links, *wiki, query)
 	return run(url)	
 }
@@ -41,7 +42,7 @@ func isAmbiguous(r []interface{}) bool {
 	return len(names) > 1
 }
 
-func run(url string) (*gzip.Reader, error) {
+func run(url string) (io.ReadCloser, error) {
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 	}
@@ -49,12 +50,10 @@ func run(url string) (*gzip.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Accept-Encoding", "gzip")
-	req.Header.Set("User-Agent", "gcli (gzip)")
+	req.Header.Set("User-Agent", "wkcli")
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
-	return gzip.NewReader(response.Body)
+	return response.Body, nil
 }

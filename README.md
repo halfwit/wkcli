@@ -2,7 +2,6 @@
 
 Search wikimedia sites from the command line
 
-
 ## Usage
 ```
 wkcli [ -lx ] [ -w wiki ]
